@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tic Tac Toe</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Tic Tac Toe</h1>
+    <div id="status"></div>
+    <div class="board" id="board"></div>
+    <div class="controls">
+        <button onclick="restart()">🔁 Restart</button>
+        <button onclick="undo()">↩️ Undo</button>
+    </div>
+
+    <script>
+        const boardDiv = document.getElementById("board");
+        const statusDiv = document.getElementById("status");
+
+        function render(state) {
+            boardDiv.innerHTML = "";
+            state.board.forEach((val, i) => {
+                const cell = document.createElement("div");
+                cell.className = "cell";
+                cell.innerText = val;
+                cell.onclick = () => makeMove(i);
+                boardDiv.appendChild(cell);
+            });
+
+            if (state.winner) {
+                statusDiv.innerText = `🎉 Player ${state.winner} wins!`;
+            } else if (state.draw) {
+                statusDiv.innerText = "It's a draw!";
+            } else {
+                statusDiv.innerText = `Player ${state.current_player}'s turn`;
+            }
+        }
+
+        async function getState() {
+            const res = await fetch("/state");
+            const data = await res.json();
+            render(data);
+        }
+
+        async function makeMove(index) {
+            await fetch("/move", {
+                method: "POST",
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({index})
+            });
+            getState();
+        }
+
+        async function undo() {
+            await fetch("/undo", {method: "POST"});
+            getState();
+        }
+
+        async function restart() {
+            await fetch("/restart", {method: "POST"});
+            getState();
+        }
+
+        getState();  // initial load
+    </script>
+</body>
+</html>
